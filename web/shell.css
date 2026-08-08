@@ -171,3 +171,8 @@ ul.plain li:last-child { border-bottom: 0; }
 
 .scan-form { display: flex; gap: .4rem; margin-bottom: 1rem; }
 .scan-form input { flex: 1; }
+
+.template-list, .instance-list, .shelf, .outbox, .order-list { margin-bottom: 1rem; }
+.instance.shut, .order.cancelled, .pass.spent { opacity: .7; }
+.delivery.attention { border-left: 3px solid var(--warn); padding-left: .5rem; }
+button.link { background: transparent; color: var(--accent); border-color: transparent; padding-left: 0; }

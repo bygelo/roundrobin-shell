@@ -30,9 +30,11 @@ import {
   renderSignIn,
 } from '/dist/render.js'
 import { renderConsole, renderMembership } from '/dist/render-gate.js'
+import { renderCounter, renderOutbox } from '/dist/render-counter.js'
 import { renderDocument, renderForm } from '/dist/render-library.js'
 import { createBillingApi } from '/dist/view/billing.js'
 import { createGateApi } from '/dist/view/gate.js'
+import { createCounterApi } from '/dist/view/counter.js'
 import { createLibraryApi } from '/dist/view/library.js'
 import { createBookingApi, groupByResource, todayRange } from '/dist/view/booking.js'
 import { describeFailure } from '/dist/view/failure.js'
@@ -125,6 +127,8 @@ function showShell(navigation) {
     if (item.module_code === 'access') return showConsole(detail, item, navigation)
     if (item.module_code === 'form') return showLibrary(detail, item, 'form')
     if (item.module_code === 'document') return showLibrary(detail, item, 'document')
+    if (item.module_code === 'notification') return showCounter(detail, item, 'notification')
+    if (item.module_code === 'commerce') return showCounter(detail, item, 'commerce')
 
     detail.replaceChildren(
       ...renderNotBuilt(
@@ -504,6 +508,54 @@ function showLibrary(detail, item, which) {
     // The template detail panel is its own item. Saying what was read beats a
     // button that appears to do nothing.
     window.alert(`${template.title} — ${template.kind}, ${template.status}`)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// view/notification and view/commerce — what a counter has open
+// ---------------------------------------------------------------------------
+
+function showCounter(detail, item, which) {
+  const api = createCounterApi(client)
+  const draw_view = which === 'notification' ? renderOutbox : renderCounter
+
+  let state = {
+    status: 'loading',
+    delivery: [],
+    order: [],
+    failure: undefined,
+    zone: APP_CONFIG.locale.time_zone,
+  }
+
+  draw()
+  void load()
+
+  function draw() {
+    detail.replaceChildren(
+      ...draw_view(element, { display_name: item.display_name, state }, { onBack: start }),
+    )
+  }
+
+  async function load() {
+    const session = loadSession()
+    try {
+      // The outbox needs the order list too, because its attention count and
+      // the counter total come from one tally — but only the screen being drawn
+      // pays for what it does not show.
+      if (which === 'notification') {
+        state = { ...state, status: 'ready', delivery: await api.listDelivery(session) }
+      } else {
+        state = { ...state, status: 'ready', order: await api.listOrder(session) }
+      }
+    } catch (error) {
+      const failure = describeFailure(error)
+      if (failure.is_signed_out) {
+        clearSession()
+        return showSignIn(failure.detail)
+      }
+      state = { ...state, status: 'ready', failure }
+    }
+    draw()
   }
 }
 // ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 A discovery-driven operator UI for [roundrobbin OS](https://github.com/bygelo/roundrobbin). It renders what the server says is on.
 
-Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 in progress.** Sign-in, discovery, and navigation work. **booking**, **billing**, **membership**, **access**, **form**, and **document** are drawn; two views to go.
+Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 in progress.** Sign-in, discovery, and navigation work. **All eight pack views are drawn.**
 
 ## The one idea
 
@@ -44,6 +44,8 @@ This repo is a **sibling**, not a port and not a pack. It talks HTTP like any ot
 | `src/render-gate.ts` | The gate story’s node trees, split out as `render.ts` grew. |
 | `src/view/library.ts` | Form and document. Instance answerability, byte counts, version order. |
 | `src/render-library.ts` | The library’s node trees. |
+| `src/view/counter.ts` | Notification and commerce. Outbox status wording, exact counter totals. |
+| `src/render-counter.ts` | The counter’s node trees. |
 | `src/view/failure.ts` | A refusal turned into a sentence a person can act on. |
 | `src/render.ts` | Every node tree the page draws. Takes an `element` factory, returns nodes, touches no global. |
 | `src/dom.ts` | The one DOM primitive the browser layer is built on, so it can be tested. |
@@ -92,12 +94,12 @@ npm run gate     # typecheck + build:web + check:web + test
 
 The booking one contests a slot for real, because four layers have to behave for that sentence to reach a person: the pack raises a conflict, the database refuses the overlap, the kernel maps SQLSTATE to 409 rather than 500, and the client preserves both status and message. A unit test of the mapping alone would prove none of that.
 
-Current: **161 test, 161 pass.**
+Current: **178 test, 178 pass.**
 
 ## Honest state
 
-- **Six pack views of eight.** Booking, billing, membership, the gate console, form, and the document shelf all work end to end. There is no notification outbox and no commerce screen — selecting those says so.
-- **The OS could not back a list screen.** No pack exposed a collection read; every `GET` was a lookup by a code the caller had to already know. Eight reads have now been added to the OS for these views — two for billing, four for membership, two for access. **Two packs still have the gap**: `notification` and `commerce` can read one record but not a collection, and each is a screen that cannot be built until it is closed.
+- **All eight pack views are drawn**, each walked against a running server. What none of them do yet is WRITE much: booking holds/confirms/cancels, billing approves a proof, and the gate console presents a code — the rest read. Creating an invoice, enrolling a credential, or building a form template still means calling the API directly.
+- **The OS could not back a list screen.** No pack exposed a collection read; every `GET` was a lookup by a code the caller had to already know. Eight reads have now been added to the OS for these views — two for billing, four for membership, two for access. **That gap is now closed** — all eight packs list (K38). Three of those projections are security boundaries rather than conveniences: `listCredential` omits `token_hash`, `listDocument` omits content, and `listDelivery` carries the recipient mask and never the recipient.
 - **A guard never reads a machine code off a door.** `readDeny` maps every `deny_reason_code` the pack emits to a sentence and a next move — `trip_limit` becomes "No trips left — issue a new one if that is right". An unmapped code shows the raw value and says the shell has no wording for it, because inventing a reason a guard then acts on is worse than admitting the gap.
 - **The rendering is now tested; a real browser still is not.** The trees moved out of `web/shell.js` into `src/render.ts`, so `test/render.test.ts` drives *the same code the page runs* against a stub document — a lapsed hold offering no Confirm button, a read-only session getting no action buttons at all, a 409 painted as news rather than as an error. `web/shell.js` is now bootstrap only: document, storage, fetch origin, and the wiring between a click and a call. What remains unverified is layout and CSS, which no headless check would have caught anyway.
 - **`npm run check:web` guards the module boundary.** Rename an export in `src/` and forget to rebuild, and the page dies at runtime with a blank screen while every unit test stays green. The check is red-green proven.
