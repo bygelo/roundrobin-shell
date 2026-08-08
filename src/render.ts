@@ -23,6 +23,8 @@ import type { Navigation, NavigationItem } from './navigation.ts'
 import type { Booking, BoardColumn, Slot } from './view/booking.ts'
 import type { Failure } from './view/failure.ts'
 import { actionFor, formatDay, formatRange, holdMinuteRemaining } from './view/booking.ts'
+import type { Invoice, PaymentProof } from './view/billing.ts'
+import { formatMoney, isOverdue, proofActionFor, summarize } from './view/billing.ts'
 
 /** The `element` helper from dom.ts, once bound to a document. */
 export type Element = (tag: string, attribute?: Record<string, string | ((event: unknown) => void)>, child?: unknown) => NodeLike
@@ -211,6 +213,121 @@ export function renderBoard(
         ),
       ]),
     ),
+
+    element('button', { class: 'small', onclick: handler.onBack }, 'Back'),
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// view/billing
+// ---------------------------------------------------------------------------
+
+export type BillingState = {
+  status: 'loading' | 'ready'
+  invoice: Invoice[]
+  proof: PaymentProof[]
+  failure?: Failure | undefined
+  /** From the session, so a clerk who may only look sees no review buttons. */
+  held_capability: string[]
+  now: Date
+}
+
+export type BillingHandler = {
+  onApprove: (proof: PaymentProof) => void
+  onReject: (proof: PaymentProof) => void
+  onOpenInvoice: (invoice: Invoice) => void
+  onBack: () => void
+}
+
+export function renderBilling(
+  element: Element,
+  input: { display_name: string; state: BillingState },
+  handler: BillingHandler,
+): unknown[] {
+  const { state } = input
+  const summary = summarize(state.invoice, state.now)
+
+  return [
+    element('h2', {}, input.display_name),
+
+    state.failure ? renderFailure(element, state.failure) : '',
+    state.status === 'loading' ? element('p', { class: 'muted' }, 'reading the ledger…') : '',
+
+    // The statement line. One number a treasurer looks at first.
+    state.status === 'ready'
+      ? element('div', { class: 'summary' }, [
+          element('strong', {}, formatMoney(summary.outstanding_amount)),
+          element(
+            'span',
+            { class: 'muted' },
+            ` outstanding across ${summary.open_count} invoice`,
+          ),
+          summary.overdue_count > 0
+            ? element('span', { class: 'pill overdue' }, `${summary.overdue_count} overdue`)
+            : '',
+        ])
+      : '',
+
+    // The queue this pack exists for in this market, and the reason
+    // GET /api/v1/payment/proof had to be added to the OS first.
+    state.status === 'ready'
+      ? element('div', { class: 'queue' }, [
+          element('h3', {}, 'Proof of payment'),
+          state.proof.length === 0
+            ? element('p', { class: 'muted small-text' }, 'Nothing waiting for review.')
+            : element(
+                'ul',
+                { class: 'plain' },
+                state.proof.map((one) =>
+                  element('li', { class: 'proof' }, [
+                    element('strong', {}, formatMoney(one.amount)),
+                    element('span', { class: 'muted' }, ` · ${one.status}`),
+                    element(
+                      'div',
+                      { class: 'action' },
+                      proofActionFor(one, state.held_capability).map((action) =>
+                        element(
+                          'button',
+                          {
+                            class: `small ${action}`,
+                            onclick: () =>
+                              action === 'approve' ? handler.onApprove(one) : handler.onReject(one),
+                          },
+                          action === 'approve' ? 'Approve' : 'Reject',
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+        ])
+      : '',
+
+    state.status === 'ready' && state.invoice.length === 0
+      ? element('p', { class: 'muted' }, 'No invoice yet.')
+      : '',
+
+    state.status === 'ready' && state.invoice.length > 0
+      ? element('div', { class: 'ledger' }, [
+          element('h3', {}, 'Invoice'),
+          element(
+            'ul',
+            { class: 'plain' },
+            state.invoice.map((one) =>
+              element('li', { class: isOverdue(one, state.now) ? 'invoice overdue' : 'invoice' }, [
+                element(
+                  'button',
+                  { class: 'small link', onclick: () => handler.onOpenInvoice(one) },
+                  one.invoice_code,
+                ),
+                element('span', { class: 'muted' }, ` ${one.status} · `),
+                element('strong', {}, formatMoney(one.balance_amount, one.currency_code)),
+                element('span', { class: 'muted small-text' }, ` of ${formatMoney(one.total_amount, one.currency_code)}`),
+              ]),
+            ),
+          ),
+        ])
+      : '',
 
     element('button', { class: 'small', onclick: handler.onBack }, 'Back'),
   ]

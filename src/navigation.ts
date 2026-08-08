@@ -138,6 +138,15 @@ export type Navigation = {
   organization_id: string
   item: NavigationItem[]
   /**
+   * Everything this session may do, carried through verbatim.
+   *
+   * The nav already filters by capability, but a VIEW needs the raw list — a
+   * billing clerk who may read the proof queue and not clear it gets the screen
+   * and not the buttons, and that is a decision inside the screen rather than
+   * one about whether the screen exists.
+   */
+  held_capability: string[]
+  /**
    * Modules the server reports that this shell has no screens for.
    *
    * Surfaced rather than dropped. A silent omission here would read as "that
@@ -207,6 +216,7 @@ export function deriveNavigation(
     organization_id: capability.organization_id,
     item: sortItem(item, option.navigation_order),
     undrawn_module_code,
+    held_capability: capability.capability,
   }
 }
 

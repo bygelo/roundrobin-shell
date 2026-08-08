@@ -2,7 +2,7 @@
 
 A discovery-driven operator UI for [roundrobbin OS](https://github.com/bygelo/roundrobbin). It renders what the server says is on.
 
-Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 started.** Sign-in, discovery, and navigation work; **booking** is the first of nine pack views. Seven to go.
+Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 in progress.** Sign-in, discovery, and navigation work. **booking** and **billing** are drawn; six views to go.
 
 ## The one idea
 
@@ -39,6 +39,7 @@ This repo is a **sibling**, not a port and not a pack. It talks HTTP like any ot
 | `src/discovery.ts` | The only place this repo talks to an OS. Sign-in, capability, authenticated GET. |
 | `src/vocabulary.ts` | Kernel noun → the app's word, so a clinic reads "chair" where the pack says "resource". |
 | `src/view/booking.ts` | The booking view. Board grouping, hold countdown, what an operator may do. |
+| `src/view/billing.ts` | The billing view. Exact centavo summing, overdue, who may clear the queue. |
 | `src/view/failure.ts` | A refusal turned into a sentence a person can act on. |
 | `src/render.ts` | Every node tree the page draws. Takes an `element` factory, returns nodes, touches no global. |
 | `src/dom.ts` | The one DOM primitive the browser layer is built on, so it can be tested. |
@@ -87,11 +88,12 @@ npm run gate     # typecheck + build:web + check:web + test
 
 The booking one contests a slot for real, because four layers have to behave for that sentence to reach a person: the pack raises a conflict, the database refuses the overlap, the kernel maps SQLSTATE to 409 rather than 500, and the client preserves both status and message. A unit test of the mapping alone would prove none of that.
 
-Current: **76 test, 76 pass.**
+Current: **103 test, 103 pass.**
 
 ## Honest state
 
-- **One pack view of nine.** Booking works: read a board, hold, confirm, cancel, and a contested slot reads as a sentence. There is no invoice list, no gate console, no form runner — selecting those says so.
+- **Two pack views of eight.** Booking works end to end, and billing now works the loop that matters: a GCash proof lands in a queue, approving it settles a real debt, and the queue empties. There is no gate console and no form runner — selecting those says so.
+- **The OS could not back a list screen.** No pack exposed a collection read; every `GET` was a lookup by a code the caller had to already know. `GET /api/v1/invoice` and `GET /api/v1/payment/proof` were added to the OS for this view. **The same gap remains in six packs** — `membership` and `access` have zero GET routes — and each is a screen that cannot be built until it is closed.
 - **The rendering is now tested; a real browser still is not.** The trees moved out of `web/shell.js` into `src/render.ts`, so `test/render.test.ts` drives *the same code the page runs* against a stub document — a lapsed hold offering no Confirm button, a read-only session getting no action buttons at all, a 409 painted as news rather than as an error. `web/shell.js` is now bootstrap only: document, storage, fetch origin, and the wiring between a click and a call. What remains unverified is layout and CSS, which no headless check would have caught anyway.
 - **`npm run check:web` guards the module boundary.** Rename an export in `src/` and forget to rebuild, and the page dies at runtime with a blank screen while every unit test stays green. The check is red-green proven.
 - **`dev/` installs all nine packs**, which no real buyer would. It exists so the shell has something wide to discover. Every real app is a named composition — see `docs/use-case.md` in the OS repo.

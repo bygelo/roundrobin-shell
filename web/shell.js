@@ -22,12 +22,14 @@ import { createElement } from '/dist/dom.js'
 import { deriveNavigation } from '/dist/navigation.js'
 import { createTranslator } from '/dist/vocabulary.js'
 import {
+  renderBilling,
   renderBoard,
   renderDiscovery,
   renderNavigation,
   renderNotBuilt,
   renderSignIn,
 } from '/dist/render.js'
+import { createBillingApi } from '/dist/view/billing.js'
 import { createBookingApi, groupByResource, todayRange } from '/dist/view/booking.js'
 import { describeFailure } from '/dist/view/failure.js'
 
@@ -114,6 +116,7 @@ function showShell(navigation) {
 
   function select(item) {
     if (item.module_code === 'booking') return showBoard(detail, item)
+    if (item.module_code === 'billing') return showBilling(detail, item, navigation)
 
     detail.replaceChildren(
       ...renderNotBuilt(
@@ -220,6 +223,89 @@ function showBoard(detail, item) {
     return attempt(async () => {
       await api.cancel(loadSession(), booking.booking_code)
       state = { ...state, held: null }
+    })
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// view/billing — state and wiring only; every tree comes from ../src/render.ts
+// ---------------------------------------------------------------------------
+
+function showBilling(detail, item, navigation) {
+  const api = createBillingApi(client)
+
+  let state = {
+    status: 'loading',
+    invoice: [],
+    proof: [],
+    failure: undefined,
+    // From the session the server reported, not from a local guess — a clerk
+    // who may only read gets no review buttons at all.
+    held_capability: navigation.held_capability,
+    now: new Date(),
+  }
+
+  draw()
+  void load()
+
+  function draw() {
+    detail.replaceChildren(
+      ...renderBilling(
+        element,
+        { display_name: item.display_name, state: { ...state, now: new Date() } },
+        { onApprove, onReject, onOpenInvoice, onBack: start },
+      ),
+    )
+  }
+
+  async function load() {
+    const session = loadSession()
+    try {
+      // Two reads, one screen. Both were added to the OS for this view — the
+      // pack could accept a proof and approve one by id, but could not say
+      // which were waiting.
+      const [invoice, proof] = await Promise.all([api.listInvoice(session), api.listProof(session)])
+      state = { ...state, status: 'ready', invoice, proof }
+    } catch (error) {
+      state = { ...state, status: 'ready', failure: describeFailure(error) }
+    }
+    draw()
+  }
+
+  async function attempt(work) {
+    try {
+      await work()
+      state = { ...state, failure: undefined }
+      await load()
+    } catch (error) {
+      const failure = describeFailure(error)
+      if (failure.is_signed_out) {
+        clearSession()
+        return showSignIn(failure.detail)
+      }
+      state = { ...state, failure }
+      if (failure.is_retryable) await load()
+      else draw()
+    }
+  }
+
+  function onApprove(proof) {
+    return attempt(() => api.approveProof(loadSession(), proof.payment_proof_id))
+  }
+
+  function onReject(proof) {
+    return attempt(() => api.rejectProof(loadSession(), proof.payment_proof_id))
+  }
+
+  function onOpenInvoice(invoice) {
+    return attempt(async () => {
+      const found = await api.findInvoice(loadSession(), invoice.invoice_code)
+      // Deliberately minimal for now: the line detail panel is its own item.
+      // Saying what was read beats a button that appears to do nothing.
+      window.alert(
+        `${found.invoice.invoice_code} — ${found.line.length} line, balance ${found.invoice.balance_amount}`,
+      )
     })
   }
 }
