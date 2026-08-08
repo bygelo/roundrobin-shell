@@ -30,8 +30,10 @@ import {
   renderSignIn,
 } from '/dist/render.js'
 import { renderConsole, renderMembership } from '/dist/render-gate.js'
+import { renderDocument, renderForm } from '/dist/render-library.js'
 import { createBillingApi } from '/dist/view/billing.js'
 import { createGateApi } from '/dist/view/gate.js'
+import { createLibraryApi } from '/dist/view/library.js'
 import { createBookingApi, groupByResource, todayRange } from '/dist/view/booking.js'
 import { describeFailure } from '/dist/view/failure.js'
 
@@ -121,6 +123,8 @@ function showShell(navigation) {
     if (item.module_code === 'billing') return showBilling(detail, item, navigation)
     if (item.module_code === 'membership') return showMembership(detail, item)
     if (item.module_code === 'access') return showConsole(detail, item, navigation)
+    if (item.module_code === 'form') return showLibrary(detail, item, 'form')
+    if (item.module_code === 'document') return showLibrary(detail, item, 'document')
 
     detail.replaceChildren(
       ...renderNotBuilt(
@@ -438,6 +442,68 @@ function showConsole(detail, item, navigation) {
         draw()
       }
     })()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// view/form and view/document — what was written down
+// ---------------------------------------------------------------------------
+
+function showLibrary(detail, item, which) {
+  const api = createLibraryApi(client)
+  const draw_view = which === 'form' ? renderForm : renderDocument
+
+  let state = {
+    status: 'loading',
+    template: [],
+    instance: [],
+    document: [],
+    failure: undefined,
+    now: new Date(),
+  }
+
+  draw()
+  void load()
+
+  function draw() {
+    detail.replaceChildren(
+      ...draw_view(
+        element,
+        { display_name: item.display_name, state: { ...state, now: new Date() } },
+        { onOpenTemplate, onBack: start },
+      ),
+    )
+  }
+
+  async function load() {
+    const session = loadSession()
+    try {
+      // Only what this screen shows. The form view does not fetch the shelf,
+      // and the shelf does not fetch forms — two modules, two round trips.
+      if (which === 'form') {
+        const [template, instance] = await Promise.all([
+          api.listTemplate(session),
+          api.listInstance(session),
+        ])
+        state = { ...state, status: 'ready', template, instance }
+      } else {
+        state = { ...state, status: 'ready', document: await api.listDocument(session) }
+      }
+    } catch (error) {
+      const failure = describeFailure(error)
+      if (failure.is_signed_out) {
+        clearSession()
+        return showSignIn(failure.detail)
+      }
+      state = { ...state, status: 'ready', failure }
+    }
+    draw()
+  }
+
+  function onOpenTemplate(template) {
+    // The template detail panel is its own item. Saying what was read beats a
+    // button that appears to do nothing.
+    window.alert(`${template.title} — ${template.kind}, ${template.status}`)
   }
 }
 // ---------------------------------------------------------------------------
