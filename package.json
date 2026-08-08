@@ -1,0 +1,36 @@
+{
+  "name": "roundrobbin-shell",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A discovery-driven operator UI for roundrobbin OS. Renders what the server says is on.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"test/**/*.test.ts\"",
+    "dev": "npm run build:web && node --experimental-strip-types dev/server.ts",
+    "dev:seed": "node --experimental-strip-types dev/seed.ts",
+    "gate": "npm run typecheck && npm run build:web && npm test",
+    "build:web": "tsc -p tsconfig.web.json"
+  },
+  "dependencies": {
+    "@bygelo/roundrobbin-access": "file:../roundrobbin/package/access",
+    "@bygelo/roundrobbin-billing": "file:../roundrobbin/package/billing",
+    "@bygelo/roundrobbin-booking": "file:../roundrobbin/package/booking",
+    "@bygelo/roundrobbin-commerce": "file:../roundrobbin/package/commerce",
+    "@bygelo/roundrobbin-document": "file:../roundrobbin/package/document",
+    "@bygelo/roundrobbin-form": "file:../roundrobbin/package/form",
+    "@bygelo/roundrobbin-kernel": "file:../roundrobbin/package/kernel",
+    "@bygelo/roundrobbin-membership": "file:../roundrobbin/package/membership",
+    "@bygelo/roundrobbin-notification": "file:../roundrobbin/package/notification",
+    "@hono/node-server": "^2.1.0",
+    "hono": "^4.13.1",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3"
+  }
+}
