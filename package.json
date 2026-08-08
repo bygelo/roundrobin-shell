@@ -12,8 +12,9 @@
     "test": "node --test --experimental-strip-types \"test/**/*.test.ts\"",
     "dev": "npm run build:web && node --experimental-strip-types dev/server.ts",
     "dev:seed": "node --experimental-strip-types dev/seed.ts",
-    "gate": "npm run typecheck && npm run build:web && npm test",
-    "build:web": "tsc -p tsconfig.web.json"
+    "gate": "npm run typecheck && npm run build:web && npm run check:web && npm test",
+    "build:web": "tsc -p tsconfig.web.json",
+    "check:web": "node script/check-web-import.mjs"
   },
   "dependencies": {
     "@bygelo/roundrobbin-access": "file:../roundrobbin/package/access",
