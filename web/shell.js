@@ -29,7 +29,9 @@ import {
   renderNotBuilt,
   renderSignIn,
 } from '/dist/render.js'
+import { renderConsole, renderMembership } from '/dist/render-gate.js'
 import { createBillingApi } from '/dist/view/billing.js'
+import { createGateApi } from '/dist/view/gate.js'
 import { createBookingApi, groupByResource, todayRange } from '/dist/view/booking.js'
 import { describeFailure } from '/dist/view/failure.js'
 
@@ -117,6 +119,8 @@ function showShell(navigation) {
   function select(item) {
     if (item.module_code === 'booking') return showBoard(detail, item)
     if (item.module_code === 'billing') return showBilling(detail, item, navigation)
+    if (item.module_code === 'membership') return showMembership(detail, item)
+    if (item.module_code === 'access') return showConsole(detail, item, navigation)
 
     detail.replaceChildren(
       ...renderNotBuilt(
@@ -310,6 +314,132 @@ function showBilling(detail, item, navigation) {
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// view/membership — may this person come in
+// ---------------------------------------------------------------------------
+
+function showMembership(detail, item) {
+  const api = createGateApi(client)
+  let state = {
+    status: 'loading',
+    membership: [],
+    pass: [],
+    credential: [],
+    failure: undefined,
+    now: new Date(),
+  }
+
+  draw()
+  void load()
+
+  function draw() {
+    detail.replaceChildren(
+      ...renderMembership(
+        element,
+        { display_name: item.display_name, state: { ...state, now: new Date() } },
+        { onBack: start },
+      ),
+    )
+  }
+
+  async function load() {
+    const session = loadSession()
+    try {
+      // Three reads, one screen. None of them existed before this checkpoint.
+      const [membership, pass, credential] = await Promise.all([
+        api.listMembership(session),
+        api.listPass(session),
+        api.listCredential(session),
+      ])
+      state = { ...state, status: 'ready', membership, pass, credential }
+    } catch (error) {
+      state = { ...state, status: 'ready', failure: describeFailure(error) }
+    }
+    draw()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// view/access — the door console
+// ---------------------------------------------------------------------------
+
+function showConsole(detail, item, navigation) {
+  const api = createGateApi(client)
+
+  let state = {
+    status: 'loading',
+    point: [],
+    selected_access_point_id: null,
+    scan: [],
+    last: null,
+    failure: undefined,
+    held_capability: navigation.held_capability,
+    zone: APP_CONFIG.locale.time_zone,
+  }
+
+  draw()
+  void load()
+
+  function draw() {
+    detail.replaceChildren(
+      ...renderConsole(
+        element,
+        { display_name: item.display_name, state },
+        { onSelectPoint, onScan, onBack: start },
+      ),
+    )
+  }
+
+  async function load() {
+    const session = loadSession()
+    try {
+      const point = await api.listAccessPoint(session)
+      // Default to the first door rather than making a guard pick before they
+      // can see anything. One gate is the common case.
+      const selected_access_point_id =
+        state.selected_access_point_id ?? point[0]?.access_point_id ?? null
+      const filter = selected_access_point_id ? { access_point_id: selected_access_point_id } : {}
+      const scan = await api.listScanEvent(session, filter)
+      state = { ...state, status: 'ready', point, selected_access_point_id, scan }
+    } catch (error) {
+      state = { ...state, status: 'ready', failure: describeFailure(error) }
+    }
+    draw()
+  }
+
+  function onSelectPoint(point) {
+    state = { ...state, selected_access_point_id: point.access_point_id, last: null }
+    draw()
+    void load()
+  }
+
+  // A DENIAL IS NOT A FAILURE. authorizeAccess answers 200 with
+  // outcome: 'denied', and treating that as an error would put a red box where
+  // a guard needs a readable instruction. Only a genuine HTTP failure — a
+  // revoked session, a 403 for a watcher — goes through describeFailure.
+  function onScan(presented) {
+    if (!presented || !state.selected_access_point_id) return
+    return (async () => {
+      try {
+        const last = await api.scan(loadSession(), {
+          access_point_id: state.selected_access_point_id,
+          presented,
+        })
+        state = { ...state, last, failure: undefined }
+        await load()
+      } catch (error) {
+        const failure = describeFailure(error)
+        if (failure.is_signed_out) {
+          clearSession()
+          return showSignIn(failure.detail)
+        }
+        state = { ...state, failure }
+        draw()
+      }
+    })()
+  }
+}
 // ---------------------------------------------------------------------------
 
 async function start() {

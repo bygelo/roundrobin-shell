@@ -149,3 +149,25 @@ ul.plain li:last-child { border-bottom: 0; }
 .notice { border: 1px solid var(--warn); }
 .error-box { border: 1px solid var(--error); }
 .notice p, .error-box p { margin: .2rem 0 0; }
+
+.pass-list, .credential-list, .gate-picker, .feed { margin-bottom: 1rem; }
+.pass-list h3, .credential-list h3, .feed h3 {
+  font-size: .95rem; margin: 0 0 .35rem; font-weight: 600;
+}
+
+.pass.spent, .scan.denied { opacity: .75; }
+.gate.chosen { background: var(--accent); color: #fff; }
+
+/* The verdict a guard reads. Deliberately the loudest thing on the screen. */
+.verdict {
+  border-radius: .4rem;
+  padding: .8rem;
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+}
+.verdict.allowed { border: 2px solid var(--accent); }
+.verdict.denied { border: 2px solid var(--error); }
+.verdict p { margin: .3rem 0 0; }
+
+.scan-form { display: flex; gap: .4rem; margin-bottom: 1rem; }
+.scan-form input { flex: 1; }
