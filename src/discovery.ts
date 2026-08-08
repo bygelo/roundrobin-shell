@@ -43,7 +43,8 @@ export type ClientOption = {
 export type ShellClient = {
   signIn: (credential: Credential) => Promise<Session>
   fetchCapability: (session: Session) => Promise<Capability>
-  get: <T>(session: Session, path: string) => Promise<T>
+  get: <T>(session: Session, path: string, query?: Record<string, string | undefined>) => Promise<T>
+  post: <T>(session: Session, path: string, body?: unknown) => Promise<T>
 }
 
 export function createClient(option: ClientOption): ShellClient {
@@ -85,9 +86,41 @@ export function createClient(option: ClientOption): ShellClient {
         headers: { authorization: `Bearer ${session.token}` },
       }),
 
-    get: (session, path) =>
-      request(path, { headers: { authorization: `Bearer ${session.token}` } }),
+    get: (session, path, query) =>
+      request(`${path}${searchOf(query)}`, {
+        headers: { authorization: `Bearer ${session.token}` },
+      }),
+
+    post: (session, path, body) =>
+      request(path, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${session.token}`,
+          'content-type': 'application/json',
+        },
+        // A route with nothing to send still needs a body, because the pack
+        // routes call context.req.json() unconditionally and an empty body
+        // throws there rather than here.
+        body: JSON.stringify(body ?? {}),
+      }),
   }
+}
+
+/**
+ * Build a query string, dropping anything undefined.
+ *
+ * Serialising `undefined` yields the literal string "undefined", which the
+ * booking pack then parses as a date and turns into Invalid Date — a filter
+ * nobody asked for, applied silently.
+ */
+function searchOf(query?: Record<string, string | undefined>): string {
+  if (!query) return ''
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) search.set(key, value)
+  }
+  const text = search.toString()
+  return text ? `?${text}` : ''
 }
 
 /**

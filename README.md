@@ -2,7 +2,7 @@
 
 A discovery-driven operator UI for [roundrobbin OS](https://github.com/bygelo/roundrobbin). It renders what the server says is on.
 
-Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 only** — sign-in, discovery, and navigation. The pack screens land in phase 2.
+Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 started.** Sign-in, discovery, and navigation work; **booking** is the first of nine pack views. Seven to go.
 
 ## The one idea
 
@@ -38,10 +38,13 @@ This repo is a **sibling**, not a port and not a pack. It talks HTTP like any ot
 | `src/navigation.ts` | The whole idea, and pure. Capability payload → navigation. No fetch, no DOM. |
 | `src/discovery.ts` | The only place this repo talks to an OS. Sign-in, capability, authenticated GET. |
 | `src/vocabulary.ts` | Kernel noun → the app's word, so a clinic reads "chair" where the pack says "resource". |
+| `src/view/booking.ts` | The booking view. Board grouping, hold countdown, what an operator may do. |
+| `src/view/failure.ts` | A refusal turned into a sentence a person can act on. |
+| `src/dom.ts` | The one DOM primitive the browser layer is built on, so it can be tested. |
 | `web/` | A no-framework browser layer. See below. |
 | `dev/` | A harness: one app with all nine packs, a seeder, and a static server. |
 
-**No framework, and that is a phase-1 decision rather than a principle.** Everything worth arguing about lives in `src/`, is pure, and is tested headlessly. What remains in `web/` is turning that into DOM. Phase 2 draws nine pack views with forms, tables, and a calendar — that is where a framework earns its keep, and adopting one then changes nothing in `src/`, because `src/` never learns what is rendering it.
+**No framework yet, and that is a staging decision rather than a principle.** Everything worth arguing about lives in `src/`, is pure, and is tested headlessly. What remains in `web/` is turning that into DOM. Somewhere in the next seven views the hand-rolled `element()` stops paying for itself — the signal will be `web/shell.js` growing state that `src/` does not own. Adopting a framework then changes nothing in `src/`, because `src/` never learns what is rendering it.
 
 ## Run it
 
@@ -79,14 +82,16 @@ $env:DATABASE_URL = 'postgres://postgres@localhost:5432/roundrobbin_dev'
 npm run gate     # typecheck + build:web + test
 ```
 
-`test/discovery-live.test.ts` is the phase-1 exit condition, executed: a real PostgreSQL, the real kernel app with all nine packs, the real sign-in route, the real client, and the real derivation. The OS app's own `request` stands in for the socket, which exercises routing and middleware without binding a port. It **skips without `DATABASE_URL`** and must run in CI.
+`test/discovery-live.test.ts` and `test/booking-live.test.ts` are the phase-1 and phase-2 exit conditions, executed: a real PostgreSQL, the real kernel app with all nine packs, the real sign-in route, the real client, and the real derivation. The OS app's own `request` stands in for the socket, which exercises routing and middleware without binding a port. They **skip without `DATABASE_URL`** and must run in CI.
 
-Current: **22 test, 22 pass.**
+The booking one contests a slot for real, because four layers have to behave for that sentence to reach a person: the pack raises a conflict, the database refuses the overlap, the kernel maps SQLSTATE to 409 rather than 500, and the client preserves both status and message. A unit test of the mapping alone would prove none of that.
+
+Current: **54 test, 54 pass.**
 
 ## Honest state
 
-- **Phase 1 only.** Selecting a pack says its screens land in phase 2. There is no calendar, no invoice list, no gate console yet.
-- **The browser layer is verified by parse and by served content type, not by a rendering test.** The logic behind it is covered; the DOM assembly is not. A headless render check is worth adding before phase 2 adds nine views on top of it.
+- **One pack view of nine.** Booking works: read a board, hold, confirm, cancel, and a contested slot reads as a sentence. There is no invoice list, no gate console, no form runner — selecting those says so.
+- **The page has never been watched rendering.** `src/dom.ts` is now tested against a stub document, which covers the primitive every render line goes through — conditional children, mapped arrays, handlers vs attributes. The *assembly* above it is still unverified: `web/shell.js` parses as ESM, every import resolves, and every asset serves with the right content type, but no test drives the page. A headless render check is the next thing this repo needs, and it should land before the second pack view, not after the ninth.
 - **`dev/` installs all nine packs**, which no real buyer would. It exists so the shell has something wide to discover. Every real app is a named composition — see `docs/use-case.md` in the OS repo.
 - **`shell.config.json` is inlined** in `web/shell.js` rather than fetched. It becomes a real file when a second app uses this.
 - **The risk this repo carries:** pack knowledge now lives in two places. `contract/*.json` in the OS makes a drift a build failure rather than a surprise, and that is the mitigation — but it is a real ongoing cost, and it is why this is a separate repo with its own gate.

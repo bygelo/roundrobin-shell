@@ -128,3 +128,24 @@ ul.plain li { padding-bottom: .9rem; border-bottom: 1px solid var(--line); }
 ul.plain li:last-child { border-bottom: 0; }
 
 .action { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .4rem; }
+
+.column { margin-bottom: 1rem; }
+.column h3 { font-size: .95rem; margin: 0 0 .35rem; font-weight: 600; }
+
+.hold {
+  border: 1px solid var(--line);
+  border-radius: .4rem;
+  padding: .7rem;
+  margin-bottom: 1rem;
+  background: var(--ground);
+}
+
+/* A contested slot is news, not a failure — it gets the calm treatment. */
+.notice, .error-box {
+  border-radius: .4rem;
+  padding: .6rem .75rem;
+  margin-bottom: .9rem;
+}
+.notice { border: 1px solid var(--warn); }
+.error-box { border: 1px solid var(--error); }
+.notice p, .error-box p { margin: .2rem 0 0; }

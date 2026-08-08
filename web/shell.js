@@ -1,24 +1,39 @@
 // The browser layer.
 //
-// Deliberately no framework, and that is a phase-1 decision rather than a
+// Deliberately no framework yet, and that is a staging decision rather than a
 // principle. Everything worth arguing about — which packs render, which
-// actions a session may take, what the app calls a resource — lives in ../src,
-// is pure, and is tested headlessly. What remains here is turning that into
-// DOM, and a framework would add a build pipeline to a repo whose only shipped
-// logic today is one pure function.
+// actions a session may take, how long a hold has left, what a refusal should
+// say — lives in ../src, is pure, and is tested headlessly. What remains here
+// is turning that into DOM.
 //
-// Phase 2 draws nine pack views with forms, tables, and a calendar. That is
-// where a framework earns its keep, and adopting one then changes nothing in
-// ../src, because ../src never learns what is rendering it.
+// One pack view is drawn (booking). Seven to go. Somewhere in there the
+// hand-rolled `element()` in ../src/dom.ts stops paying for itself and a framework starts
+// earning its keep — the signal will be this file growing state that ../src
+// does not own. Adopting one then changes nothing in ../src, because ../src
+// never learns what is rendering it.
 
 import { createClient, DiscoveryError } from '/dist/discovery.js'
 import { deriveNavigation } from '/dist/navigation.js'
 import { createTranslator } from '/dist/vocabulary.js'
+import {
+  actionFor,
+  createBookingApi,
+  formatDay,
+  formatRange,
+  groupByResource,
+  holdMinuteRemaining,
+  todayRange,
+} from '/dist/view/booking.js'
+import { describeFailure } from '/dist/view/failure.js'
+// The one DOM primitive, extracted to ../src so it can be tested against a stub
+// document. It is where a conditional child or a mapped array goes wrong.
+import { createElement } from '/dist/dom.js'
 
 // What an app supplies. In a real deployment this is shell.config.json fetched
 // at boot; inlined here so the dev harness has no build step at all.
 const APP_CONFIG = {
   brand: { display_name: 'roundrobbin shell' },
+  locale: { time_zone: 'Asia/Manila' },
   navigation_order: ['booking', 'billing', 'membership', 'access'],
   label: {},
   vocabulary: {},
@@ -27,21 +42,9 @@ const APP_CONFIG = {
 const client = createClient({ base_url: window.location.origin })
 const translate = createTranslator(APP_CONFIG.vocabulary)
 const root = document.getElementById('root')
+const element = createElement(document)
 
 const STORAGE_KEY = 'roundrobbin.shell.session'
-
-function element(tag, attribute = {}, child = []) {
-  const node = document.createElement(tag)
-  for (const [key, value] of Object.entries(attribute)) {
-    if (key === 'class') node.className = value
-    else if (key.startsWith('on')) node.addEventListener(key.slice(2), value)
-    else node.setAttribute(key, value)
-  }
-  for (const one of [].concat(child)) {
-    node.append(typeof one === 'string' ? document.createTextNode(one) : one)
-  }
-  return node
-}
 
 function render(node) {
   root.replaceChildren(node)
@@ -160,16 +163,159 @@ function renderShell(navigation) {
   render(element('div', { class: 'layout' }, [nav, detail]))
 
   function select(item) {
-    // Phase 2 mounts view/<pack> here. Saying so is more useful than a blank
-    // panel that looks like a bug.
+    if (item.module_code === 'booking') return renderBooking(detail, item)
+
+    // The remaining seven land in later phases. Saying so is more useful than
+    // a blank panel that looks like a bug.
     detail.replaceChildren(
       element('h2', {}, item.display_name),
       element('p', { class: 'muted' }, [
-        `Screens for ${translate.one(item.module_code)} land in phase 2. `,
+        `Screens for ${translate.one(item.module_code)} are not built yet. `,
         `This module answers on ${item.route_prefix.join(', ') || 'no route'}.`,
       ]),
       element('button', { class: 'small', onclick: () => start() }, 'Back'),
     )
+  }
+}
+
+// ---------------------------------------------------------------------------
+// view/booking — the first pack view
+// ---------------------------------------------------------------------------
+
+function renderBooking(detail, item) {
+  const zone = APP_CONFIG.locale.time_zone
+  const api = createBookingApi(client)
+  const range = todayRange(new Date())
+  let held = null
+
+  draw({ status: 'loading' })
+  void load()
+
+  async function load() {
+    try {
+      const slot = await api.listAvailable(loadSession(), range)
+      draw({ status: 'ready', column: groupByResource(slot) })
+    } catch (error) {
+      draw({ status: 'failed', failure: describeFailure(error) })
+    }
+  }
+
+  // Every write funnels through here so that exactly one place decides what a
+  // refusal looks like. A 409 is the double-booking guarantee working, and the
+  // board is simply out of date — so the honest response is to say so and
+  // reload, not to show a red error and leave stale slots on screen.
+  async function attempt(work) {
+    try {
+      await work()
+      await load()
+    } catch (error) {
+      const failure = describeFailure(error)
+      if (failure.is_signed_out) {
+        clearSession()
+        return renderSignIn(failure.detail)
+      }
+      draw({ status: 'ready', failure, column: currentColumn })
+      if (failure.is_retryable) await load()
+    }
+  }
+
+  let currentColumn = []
+
+  function draw(state) {
+    if (state.column) currentColumn = state.column
+    const now = new Date()
+
+    detail.replaceChildren(
+      element('h2', {}, item.display_name),
+      element('p', { class: 'muted small-text' }, formatDay(range.starts_at.toISOString(), zone)),
+
+      state.failure ? failureBanner(state.failure) : '',
+
+      state.status === 'loading' ? element('p', { class: 'muted' }, 'reading availability…') : '',
+
+      held ? holdCard(held, now) : '',
+
+      state.status !== 'loading' && currentColumn.length === 0
+        ? element('p', { class: 'muted' }, 'Nothing bookable in this window.')
+        : '',
+
+      ...currentColumn.map((column) =>
+        element('div', { class: 'column' }, [
+          element('h3', {}, column.display_name),
+          element(
+            'div',
+            { class: 'action' },
+            column.slot.map((one) =>
+              element(
+                'button',
+                {
+                  class: 'small',
+                  onclick: () =>
+                    attempt(async () => {
+                      held = await api.hold(loadSession(), {
+                        session_id: one.session_id,
+                        resource_id: one.resource_id,
+                      })
+                    }),
+                },
+                `${formatRange(one.starts_at, one.ends_at, zone)} · ₱${one.price_amount}`,
+              ),
+            ),
+          ),
+        ]),
+      ),
+
+      element('button', { class: 'small', onclick: () => start() }, 'Back'),
+    )
+  }
+
+  function holdCard(booking, now) {
+    const remaining = holdMinuteRemaining(booking, now)
+    const available = actionFor(booking, now)
+
+    return element('div', { class: 'hold' }, [
+      element('strong', {}, `${booking.status} · ${booking.booking_code}`),
+      element(
+        'span',
+        { class: 'muted' },
+        remaining === null
+          ? booking.status === 'confirmed'
+            ? ' confirmed'
+            : ' this hold has lapsed'
+          : ` ${remaining} minute left to confirm`,
+      ),
+      element(
+        'div',
+        { class: 'action' },
+        available.map((action) =>
+          element(
+            'button',
+            {
+              class: 'small',
+              onclick: () =>
+                attempt(async () => {
+                  if (action === 'confirm') {
+                    held = await api.confirm(loadSession(), booking.booking_code)
+                  } else {
+                    await api.cancel(loadSession(), booking.booking_code)
+                    held = null
+                  }
+                }),
+            },
+            action === 'confirm' ? 'Confirm' : 'Cancel',
+          ),
+        ),
+      ),
+    ])
+  }
+
+  // A refusal reads as a sentence. The class is chosen by is_retryable rather
+  // than by status: a contested slot is not an error state, it is news.
+  function failureBanner(failure) {
+    return element('div', { class: failure.is_retryable ? 'notice' : 'error-box' }, [
+      element('strong', {}, failure.headline),
+      element('p', { class: 'small-text' }, failure.detail),
+    ])
   }
 }
 
