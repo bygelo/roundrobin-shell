@@ -28,11 +28,20 @@ import { DOCUMENT_MODULE, documentRoute } from '@bygelo/roundrobbin-document'
 import { FORM_MODULE, formRoute } from '@bygelo/roundrobbin-form'
 import { MEMBERSHIP_MODULE, membershipRoute } from '@bygelo/roundrobbin-membership'
 import { NOTIFICATION_MODULE, notificationRoute } from '@bygelo/roundrobbin-notification'
+// scan takes the store because two of its route are public — outside /api/*, so
+// neither the bearer middleware nor module gating runs, and it checks enablement
+// itself. Hence a factory here where the other pack export a contributor.
+import { SCAN_MODULE, createScanRoute } from '@bygelo/roundrobbin-scan'
 
 export const DECLARATION: ModuleDeclaration[] = [
   BOOKING_MODULE,
   BILLING_MODULE,
   MEMBERSHIP_MODULE,
+  // K60 folded the door log onto scan, so access now depends on it. The registry
+  // is dependency-checked at declaration time and refuses by name — leave scan
+  // out and the seed dies with `module "access" depends on "scan", which is not
+  // declared`, which is the registry doing exactly its job.
+  SCAN_MODULE,
   ACCESS_MODULE,
   FORM_MODULE,
   DOCUMENT_MODULE,
@@ -40,17 +49,17 @@ export const DECLARATION: ModuleDeclaration[] = [
   COMMERCE_MODULE,
 ]
 
-const ROUTE = [
-  bookingRoute,
-  billingRoute,
-  membershipRoute,
-  accessRoute,
-  formRoute,
-  documentRoute,
-  notificationRoute,
-  commerceRoute,
-]
-
 export function createDevApp(store: Store): KernelApp {
-  return createApp({ store, declaration: DECLARATION }, ROUTE)
+  const route = [
+    bookingRoute,
+    billingRoute,
+    membershipRoute,
+    createScanRoute(store),
+    accessRoute,
+    formRoute,
+    documentRoute,
+    notificationRoute,
+    commerceRoute,
+  ]
+  return createApp({ store, declaration: DECLARATION }, route)
 }

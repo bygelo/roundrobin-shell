@@ -26,6 +26,7 @@
     "@bygelo/roundrobbin-kernel": "file:../roundrobbin/package/kernel",
     "@bygelo/roundrobbin-membership": "file:../roundrobbin/package/membership",
     "@bygelo/roundrobbin-notification": "file:../roundrobbin/package/notification",
+    "@bygelo/roundrobbin-scan": "file:../roundrobbin/package/scan",
     "@hono/node-server": "^2.1.0",
     "hono": "^4.13.1",
     "postgres": "^3.4.7"
