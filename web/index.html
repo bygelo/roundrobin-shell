@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="/shell.css" />
   </head>
   <body>
+    <!-- Chrome, and chrome only. It holds no state, never changes per module,
+         and the one runtime value in it is the product name. See docs/design.md
+         — the bar carries these four things and nothing is ever added. -->
+    <header class="app-bar">
+      <span class="waffle" aria-hidden="true"
+        ><span></span><span></span><span></span><span></span><span></span
+        ><span></span><span></span><span></span><span></span
+      ></span>
+      <span class="product" id="app-bar-product"></span>
+      <span class="spacer"></span>
+      <span class="glyph" aria-hidden="true">?</span>
+      <span class="avatar" id="app-bar-avatar" aria-hidden="true"></span>
+    </header>
     <main id="root">
       <p class="muted">loading…</p>
     </main>

@@ -46,7 +46,10 @@ describe('the shell against a real OS', { skip: !DATABASE_URL }, () => {
     assert.equal(navigation.organization_id, tenant.organization_id)
     assert.deepEqual(
       navigation.item.map((one) => one.module_code).sort(),
-      ['access', 'billing', 'booking', 'commerce', 'document', 'form', 'membership', 'notification'],
+      // Nine, not eight. `scan` joined the list when K60 gave `access` a
+      // dependency on it — no composition with a gate can avoid installing it —
+      // and it drew nothing for as long as nobody ran this file.
+      ['access', 'billing', 'booking', 'commerce', 'document', 'form', 'membership', 'notification', 'scan'],
       'every installed pack draws, because this operator holds every capability',
     )
     assert.deepEqual(navigation.undrawn_module_code, [], 'every enabled module has a view')

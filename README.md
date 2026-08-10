@@ -2,7 +2,9 @@
 
 A discovery-driven operator UI for [roundrobbin OS](https://github.com/bygelo/roundrobbin). It renders what the server says is on.
 
-Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 in progress.** Sign-in, discovery, and navigation work. **All eight pack views are drawn.**
+Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. **Phase 1 complete, phase 2 in progress.** Sign-in, discovery, and navigation work. **All nine pack views are drawn.**
+
+**It is styled.** [`docs/design.md`](docs/design.md) reads the Microsoft account dashboard's layout and Fluent 2's published tokens, and `web/shell.css` implements it — every colour, radius, shadow and type value resolved from `@fluentui/tokens` `webLightTheme` rather than eyeballed, and checked against the computed values in a browser. Nothing in `src/` was touched to do it, which is the property that made it a styling job rather than a rewrite.
 
 ## The one idea
 
@@ -46,6 +48,8 @@ This repo is a **sibling**, not a port and not a pack. It talks HTTP like any ot
 | `src/render-library.ts` | The library’s node trees. |
 | `src/view/counter.ts` | Notification and commerce. Outbox status wording, exact counter totals. |
 | `src/render-counter.ts` | The counter’s node trees. |
+| `src/view/scan.ts` | The scan view. Code usability, and the outcome vocabulary — where a cancelled code must not read as a forgery, and a replay must not read as a second scan. |
+| `src/render-scan.ts` | The scan screen’s node trees. |
 | `src/view/failure.ts` | A refusal turned into a sentence a person can act on. |
 | `src/render.ts` | Every node tree the page draws. Takes an `element` factory, returns nodes, touches no global. |
 | `src/dom.ts` | The one DOM primitive the browser layer is built on, so it can be tested. |
@@ -71,6 +75,16 @@ npm run dev           # http://localhost:8788
 
 Sign in with `shell-dev` / `operator` / `correct-horse`.
 
+### Configuration
+
+Every environment variable this repo reads. All three are read by `dev/` only — `src/` reads none, because it takes its origin from the caller and never learns where it is running.
+
+| | | |
+|---|---|---|
+| `DATABASE_URL` | *required* | The OS's PostgreSQL. `dev/seed.ts` and `dev/server.ts` refuse to start without it rather than guessing a database, and the live test **skip silently** without it — see *Verify*. |
+| `PORT` | `8788` | Port `npm run dev` binds. |
+| `SEED_ORGANIZATION_CODE` | `shell-dev` | Tenant code `npm run dev:seed` creates. Seeding is idempotent by this code, so a second run is neither an error nor a duplicate. |
+
 ### See discovery work
 
 Turn a module off in the database and reload. Nothing is rebuilt and nothing is redeployed:
@@ -94,14 +108,16 @@ npm run gate     # typecheck + build:web + check:web + test
 
 The booking one contests a slot for real, because four layers have to behave for that sentence to reach a person: the pack raises a conflict, the database refuses the overlap, the kernel maps SQLSTATE to 409 rather than 500, and the client preserves both status and message. A unit test of the mapping alone would prove none of that.
 
-Current: **178 test, 178 pass.**
+Current: **197 test, 197 pass** with `DATABASE_URL` set — **172 without it, because 25 live test skip silently.**
+
+That gap is the open finding, and it is [K67](https://github.com/bygelo/roundrobbin/blob/main/ROADMAP.md). `npm run gate` does not set `DATABASE_URL`, so a skip and a pass are indistinguishable in the summary — and they have been. `scan` went undrawn on every real tenant while this gate stayed green, because the two live tests that said so were never run. A gate that silently skips its only real-composition tests is worse than no gate, because it manufactures confidence. Until that is fixed, **run the live suite by hand before believing a green gate.**
 
 ## Honest state
 
-- **All eight pack views are drawn**, each walked against a running server. What none of them do yet is WRITE much: booking holds/confirms/cancels, billing approves a proof, and the gate console presents a code — the rest read. Creating an invoice, enrolling a credential, or building a form template still means calling the API directly.
+- **All nine pack views are drawn**, each walked against a running server. What none of them do yet is WRITE much: booking holds/confirms/cancels, billing approves a proof, and the gate console presents a code — the rest read. Creating an invoice, enrolling a credential, or building a form template still means calling the API directly.
 - **The OS could not back a list screen.** No pack exposed a collection read; every `GET` was a lookup by a code the caller had to already know. Eight reads have now been added to the OS for these views — two for billing, four for membership, two for access. **That gap is now closed** — all eight packs list (K38). Three of those projections are security boundaries rather than conveniences: `listCredential` omits `token_hash`, `listDocument` omits content, and `listDelivery` carries the recipient mask and never the recipient.
 - **A guard never reads a machine code off a door.** `readDeny` maps every `deny_reason_code` the pack emits to a sentence and a next move — `trip_limit` becomes "No trips left — issue a new one if that is right". An unmapped code shows the raw value and says the shell has no wording for it, because inventing a reason a guard then acts on is worse than admitting the gap.
-- **The rendering is now tested; a real browser still is not.** The trees moved out of `web/shell.js` into `src/render.ts`, so `test/render.test.ts` drives *the same code the page runs* against a stub document — a lapsed hold offering no Confirm button, a read-only session getting no action buttons at all, a 409 painted as news rather than as an error. `web/shell.js` is now bootstrap only: document, storage, fetch origin, and the wiring between a click and a call. What remains unverified is layout and CSS, which no headless check would have caught anyway.
+- **The rendering is now tested; a real browser still is not.** The trees moved out of `web/shell.js` into `src/render.ts`, so `test/render.test.ts` drives *the same code the page runs* against a stub document — a lapsed hold offering no Confirm button, a read-only session getting no action buttons at all, a 409 painted as news rather than as an error. `web/shell.js` is now bootstrap only: document, storage, fetch origin, and the wiring between a click and a call. What remains unverified is layout and CSS, and that is not free: `view/scan` shipped three section blocks that fell straight through a stylesheet selector and rendered bare on the ground, with every test green. Opening the page is still the only thing that catches it.
 - **`npm run check:web` guards the module boundary.** Rename an export in `src/` and forget to rebuild, and the page dies at runtime with a blank screen while every unit test stays green. The check is red-green proven.
 - **`dev/` installs all nine packs**, which no real buyer would. It exists so the shell has something wide to discover. Every real app is a named composition — see `docs/use-case.md` in the OS repo.
 - **`shell.config.json` is inlined** in `web/shell.js` rather than fetched. It becomes a real file when a second app uses this.
