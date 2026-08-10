@@ -30,12 +30,14 @@ import {
   renderSignIn,
 } from '/dist/render.js'
 import { renderConsole, renderMembership } from '/dist/render-gate.js'
+import { renderScan } from '/dist/render-scan.js'
 import { renderCounter, renderOutbox } from '/dist/render-counter.js'
 import { renderDocument, renderForm } from '/dist/render-library.js'
 import { createBillingApi } from '/dist/view/billing.js'
 import { createGateApi } from '/dist/view/gate.js'
 import { createCounterApi } from '/dist/view/counter.js'
 import { createLibraryApi } from '/dist/view/library.js'
+import { createScanApi } from '/dist/view/scan.js'
 import { createBookingApi, groupByResource, todayRange } from '/dist/view/booking.js'
 import { describeFailure } from '/dist/view/failure.js'
 
@@ -58,6 +60,27 @@ const STORAGE_KEY = 'roundrobbin.shell.session'
 
 function render(node) {
   root.replaceChildren(node)
+}
+
+// The app bar is static markup in index.html; only the product name is a
+// runtime value. Two text nodes, set once, no state — if this grows a third
+// concern it belongs in ../src with a test.
+document.getElementById('app-bar-product').textContent = APP_CONFIG.brand.display_name
+document.getElementById('app-bar-avatar').textContent =
+  APP_CONFIG.brand.display_name.trim().charAt(0).toUpperCase()
+
+/**
+ * Mark which nav item the content belongs to.
+ *
+ * A styling concern, and the reason it is worth the lines: the rail draws every
+ * unselected item with no fill and no border at all, so without this the
+ * operator has nothing at all telling them where they are. Class only — the
+ * nav tree itself is still built in ../src/render.ts.
+ */
+function markSelected(chosen) {
+  for (const one of root.querySelectorAll('.nav-item')) {
+    one.classList.toggle('selected', one === chosen)
+  }
 }
 
 function loadSession() {
@@ -120,6 +143,13 @@ function showShell(navigation) {
 
   render(element('div', { class: 'layout' }, [nav, detail]))
 
+  // Delegated rather than per-button, so ../src/render.ts never has to learn
+  // that a selected state exists. Sign out is not a place, so it never marks.
+  nav.addEventListener('click', (event) => {
+    const clicked = event.target.closest?.('.nav-item')
+    if (clicked && !clicked.classList.contains('quiet')) markSelected(clicked)
+  })
+
   function select(item) {
     if (item.module_code === 'booking') return showBoard(detail, item)
     if (item.module_code === 'billing') return showBilling(detail, item, navigation)
@@ -129,6 +159,7 @@ function showShell(navigation) {
     if (item.module_code === 'document') return showLibrary(detail, item, 'document')
     if (item.module_code === 'notification') return showCounter(detail, item, 'notification')
     if (item.module_code === 'commerce') return showCounter(detail, item, 'commerce')
+    if (item.module_code === 'scan') return showScan(detail, item, navigation)
 
     detail.replaceChildren(
       ...renderNotBuilt(
@@ -554,6 +585,80 @@ function showCounter(detail, item, which) {
         return showSignIn(failure.detail)
       }
       state = { ...state, status: 'ready', failure }
+    }
+    draw()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// view/scan — what is printed, and what happened when someone scanned it
+// ---------------------------------------------------------------------------
+
+function showScan(detail, item, navigation) {
+  const api = createScanApi(client)
+
+  let state = {
+    status: 'loading',
+    target: [],
+    code: [],
+    resolution: [],
+    failure: undefined,
+    held_capability: navigation.held_capability,
+    now: new Date(),
+  }
+
+  draw()
+  void load()
+
+  function draw() {
+    detail.replaceChildren(
+      ...renderScan(
+        element,
+        { display_name: item.display_name, state },
+        { onRevoke, onBack: start },
+      ),
+    )
+  }
+
+  async function load() {
+    const session = loadSession()
+    try {
+      // Three reads, and the code list is useless without the target list —
+      // a row saying "unknown target" is what a partial load looks like.
+      const [target, code, resolution] = await Promise.all([
+        api.listTarget(session),
+        api.listCode(session),
+        api.listResolution(session, { limit_count: 50 }),
+      ])
+      state = { ...state, status: 'ready', target, code, resolution, now: new Date() }
+    } catch (error) {
+      const failure = describeFailure(error)
+      if (failure.is_signed_out) {
+        clearSession()
+        return showSignIn(failure.detail)
+      }
+      state = { ...state, status: 'ready', failure }
+    }
+    draw()
+  }
+
+  async function onRevoke(code) {
+    const session = loadSession()
+    try {
+      await api.revokeCode(session, code.scan_code_id)
+      // Re-read rather than patching the row in place. Revoking writes a
+      // resolution the log should show, and a local edit would leave the two
+      // halves of this screen disagreeing.
+      state = { ...state, status: 'loading', failure: undefined }
+      draw()
+      return void load()
+    } catch (error) {
+      const failure = describeFailure(error)
+      if (failure.is_signed_out) {
+        clearSession()
+        return showSignIn(failure.detail)
+      }
+      state = { ...state, failure }
     }
     draw()
   }

@@ -122,6 +122,16 @@ export const PACK_VIEW: PackView[] = [
     read_capability: 'commerce.read',
     action: [{ action_code: 'commerce.order', display_name: 'Take an order', capability: 'commerce.write' }],
   },
+  // Drawn last, and drawn because of a finding: K60 made `access` depend on
+  // `scan`, so every composition with a gate installs it. Leaving it undrawn
+  // meant every real tenant saw a reported gap on a module they never chose to
+  // add. See src/view/scan.ts.
+  {
+    module_code: 'scan',
+    display_name: 'Scan',
+    read_capability: 'scan.read',
+    action: [{ action_code: 'scan.revoke', display_name: 'Revoke a code', capability: 'scan.manage' }],
+  },
 ]
 
 export type NavigationItem = {
