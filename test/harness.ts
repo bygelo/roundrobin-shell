@@ -27,6 +27,7 @@ import {
   type Uuid,
 } from '@bygelo/roundrobbin-kernel'
 import { DECLARATION, createDevApp } from '../dev/app.ts'
+import type { Composition } from '../dev/composition.ts'
 import { createClient, type Session, type ShellClient } from '../src/discovery.ts'
 
 export type Role = {
@@ -68,13 +69,40 @@ export async function standUpTenant(input: {
   prefix: string
   role?: Role[]
   actor?: Actor[]
+  /**
+   * Defaults to the wide nine-pack harness. Pass F&B or court to stand up
+   * that composition instead — same shell, a different app, which is K36.
+   */
+  composition?: Composition
 }): Promise<Tenant> {
   const store = createStore(input.database_url)
   const organization_code = `${input.prefix}-${Date.now()}`
 
+  // A setup failure must not strand the pool: an un-ended store keeps the
+  // event loop alive and the test process HANGS instead of going red — the
+  // gate would time out with no failure ever reported. End it and rethrow.
+  try {
+    return await standUp(store, organization_code, input)
+  } catch (error) {
+    await store.end()
+    throw error
+  }
+}
+
+async function standUp(
+  store: Store,
+  organization_code: string,
+  input: { prefix: string; role?: Role[]; actor?: Actor[]; composition?: Composition },
+): Promise<Tenant> {
   const role = input.role ?? [{ role_code: 'owner', display_name: 'Owner' }]
   const actor = input.actor ?? [{ actor_code: 'operator', role_code: 'owner' }]
+  const enabled = input.composition?.declaration ?? DECLARATION
+  const createApp = input.composition?.createApp ?? createDevApp
 
+  // The catalog is the OS's, shared by every tenant. Always register the wide
+  // set so a composition test does not deadlock with a sibling file inserting
+  // a different slice of `module` at the same moment. What the tenant *runs*
+  // is `enabled` below; what the app *serves* is createApp.
   await withOwner(store, 'module catalog', (owner) => registerModule(owner, DECLARATION))
 
   const organization_id = await withOwner(store, 'create tenant', async (owner) => {
@@ -85,7 +113,7 @@ export async function standUpTenant(input: {
   })
 
   await withTenant(store, organization_id, async (tenant) => {
-    for (const one of DECLARATION) await enableModule(tenant, one.module_code, DECLARATION)
+    for (const one of enabled) await enableModule(tenant, one.module_code, enabled)
 
     for (const one of role) {
       const [made] = await tenant.query<{ role_id: Uuid }[]>`
@@ -120,7 +148,7 @@ export async function standUpTenant(input: {
     }
   })
 
-  const app = createDevApp(store)
+  const app = createApp(store)
   const client = createClient({
     base_url: 'http://local',
     fetch: ((request: RequestInfo | URL, init?: RequestInit) =>

@@ -15,6 +15,7 @@ import {
   type Uuid,
 } from '@bygelo/roundrobbin-kernel'
 import { DECLARATION } from './app.ts'
+import { resolveComposition } from './composition.ts'
 
 const database_url = process.env['DATABASE_URL']
 if (!database_url) {
@@ -22,7 +23,18 @@ if (!database_url) {
   process.exit(1)
 }
 
-export const TENANT_CODE = process.env['SEED_ORGANIZATION_CODE'] ?? 'shell-dev'
+const composition_code = process.env['COMPOSITION'] ?? 'all'
+const composition = composition_code === 'all' ? undefined : resolveComposition(composition_code)
+if (composition_code !== 'all' && !composition) {
+  console.error(`COMPOSITION must be fnb, court, or all — got "${composition_code}"`)
+  process.exit(1)
+}
+
+const declaration = composition?.declaration ?? DECLARATION
+const default_tenant_code =
+  composition_code === 'fnb' ? 'shell-fnb' : composition_code === 'court' ? 'shell-court' : 'shell-dev'
+
+export const TENANT_CODE = process.env['SEED_ORGANIZATION_CODE'] ?? default_tenant_code
 export const ACTOR_CODE = 'operator'
 export const ACTOR_SECRET = 'correct-horse'
 
@@ -31,7 +43,7 @@ const store = createStore(database_url)
 // Registering the catalog on every boot is the intended usage: it is
 // idempotent, so adding a module or bumping a schema version needs no separate
 // step.
-await withOwner(store, 'module catalog', (owner) => registerModule(owner, DECLARATION))
+await withOwner(store, 'module catalog', (owner) => registerModule(owner, declaration))
 
 const organization_id = await withOwner(store, 'create tenant', async (owner) => {
   const [existing] = await owner.query<{ organization_id: Uuid }[]>`
@@ -45,10 +57,10 @@ const organization_id = await withOwner(store, 'create tenant', async (owner) =>
 })
 
 await withTenant(store, organization_id, async (tenant) => {
-  for (const one of DECLARATION) {
+  for (const one of declaration) {
     // enableModule is dependency-checked and idempotent; a module already on
     // stays on.
-    await enableModule(tenant, one.module_code, DECLARATION).catch((error: unknown) => {
+    await enableModule(tenant, one.module_code, declaration).catch((error: unknown) => {
       console.warn(`  could not enable ${one.module_code}: ${String(error)}`)
     })
   }
@@ -81,6 +93,7 @@ await withTenant(store, organization_id, async (tenant) => {
 })
 
 console.log(`seeded tenant "${TENANT_CODE}"`)
+console.log(`  composition:       ${composition ? composition.composition_code : 'all'}`)
 console.log(`  organization_code: ${TENANT_CODE}`)
 console.log(`  actor_code:        ${ACTOR_CODE}`)
 console.log(`  secret:            ${ACTOR_SECRET}`)

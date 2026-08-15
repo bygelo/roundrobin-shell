@@ -9,7 +9,10 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types \"test/**/*.test.ts\"",
+    "preflight:db": "node script/preflight-db.mjs",
+    "test": "npm run preflight:db && node script/run-test.mjs",
+    "test:unit": "node script/run-test.mjs --unit",
+    "test:live": "npm run preflight:db && node script/run-test.mjs --live",
     "dev": "npm run build:web && node --experimental-strip-types dev/server.ts",
     "dev:seed": "node --experimental-strip-types dev/seed.ts",
     "gate": "npm run typecheck && npm run build:web && npm run check:web && npm test",

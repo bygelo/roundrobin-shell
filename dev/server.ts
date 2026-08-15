@@ -11,6 +11,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { createStore } from '@bygelo/roundrobbin-kernel'
 import { createDevApp } from './app.ts'
+import { resolveComposition } from './composition.ts'
 
 const database_url = process.env['DATABASE_URL']
 if (!database_url) {
@@ -18,8 +19,15 @@ if (!database_url) {
   process.exit(1)
 }
 
+const composition_code = process.env['COMPOSITION'] ?? 'all'
+const composition = composition_code === 'all' ? undefined : resolveComposition(composition_code)
+if (composition_code !== 'all' && !composition) {
+  console.error(`COMPOSITION must be fnb, court, or all — got "${composition_code}"`)
+  process.exit(1)
+}
+
 const store = createStore(database_url)
-const os_app = createDevApp(store)
+const os_app = composition ? composition.createApp(store) : createDevApp(store)
 
 const WEB_ROOT = join(import.meta.dirname, '..', 'web')
 
@@ -60,3 +68,4 @@ const port = Number(process.env['PORT'] ?? 8788)
 serve({ fetch: app.fetch, port })
 console.log(`roundrobbin shell on http://localhost:${port}`)
 console.log(`the OS it discovers is mounted at the same origin`)
+console.log(`composition: ${composition ? composition.composition_code : 'all (nine pack harness)'}`)

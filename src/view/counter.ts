@@ -45,9 +45,22 @@ export type Order = {
   placed_at: string
 }
 
+export type PlaceOrderInput = {
+  idempotency_key: string
+  line: { variant_id: string; quantity: number }[]
+  channel?: string
+  buyer_party_id?: string
+}
+
+export type PlaceOrderResult = {
+  order: Order
+  line: { description: string; quantity: number; line_amount: string }[]
+}
+
 export type CounterApi = {
   listDelivery: (session: Session, filter?: { status?: string; delivery_kind?: string }) => Promise<DeliveryLine[]>
   listOrder: (session: Session, filter?: { status?: string }) => Promise<Order[]>
+  placeOrder: (session: Session, input: PlaceOrderInput) => Promise<PlaceOrderResult>
 }
 
 export function createCounterApi(client: ShellClient): CounterApi {
@@ -64,6 +77,8 @@ export function createCounterApi(client: ShellClient): CounterApi {
       (
         await client.get<{ order: Order[] }>(session, '/api/v1/order', { status: filter?.status })
       ).order,
+
+    placeOrder: (session, input) => client.post<PlaceOrderResult>(session, '/api/v1/order', input),
   }
 }
 
