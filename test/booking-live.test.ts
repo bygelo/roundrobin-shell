@@ -14,7 +14,7 @@
 
 import assert from 'node:assert/strict'
 import { after, before, describe, it } from 'node:test'
-import type { Uuid } from '@bygelo/roundrobbin-kernel'
+import type { Uuid } from '@bygelo/roundrobin-kernel'
 import {
   actionFor,
   createBookingApi,

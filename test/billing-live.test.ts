@@ -13,8 +13,8 @@
 
 import assert from 'node:assert/strict'
 import { after, before, describe, it } from 'node:test'
-import type { Uuid } from '@bygelo/roundrobbin-kernel'
-import { addLine, createInvoice, openInvoice, submitProof } from '@bygelo/roundrobbin-billing'
+import type { Uuid } from '@bygelo/roundrobin-kernel'
+import { addLine, createInvoice, openInvoice, submitProof } from '@bygelo/roundrobin-billing'
 import { createBillingApi, summarize } from '../src/view/billing.ts'
 import { describeFailure } from '../src/view/failure.ts'
 import { seedParty, standUpTenant, type Tenant } from './harness.ts'

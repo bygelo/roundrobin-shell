@@ -1,4 +1,4 @@
-// The only place the shell talks to a roundrobbin OS.
+// The only place the shell talks to a roundrobin OS.
 //
 // HTTP, exactly like any other consumer. No database handle, no kernel import,
 // no privileged path. If the shell ever needs something the API cannot express,

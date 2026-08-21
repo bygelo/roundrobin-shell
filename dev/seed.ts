@@ -13,7 +13,7 @@ import {
   withOwner,
   withTenant,
   type Uuid,
-} from '@bygelo/roundrobbin-kernel'
+} from '@bygelo/roundrobin-kernel'
 import { DECLARATION } from './app.ts'
 import { resolveComposition } from './composition.ts'
 

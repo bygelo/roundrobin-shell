@@ -1,9 +1,9 @@
 {
-  "name": "roundrobbin-shell",
+  "name": "roundrobin-shell",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "A discovery-driven operator UI for roundrobbin OS. Renders what the server says is on.",
+  "description": "A discovery-driven operator UI for roundrobin OS. Renders what the server says is on.",
   "engines": {
     "node": ">=24"
   },
@@ -20,16 +20,16 @@
     "check:web": "node script/check-web-import.mjs"
   },
   "dependencies": {
-    "@bygelo/roundrobbin-access": "file:../roundrobbin/package/access",
-    "@bygelo/roundrobbin-billing": "file:../roundrobbin/package/billing",
-    "@bygelo/roundrobbin-booking": "file:../roundrobbin/package/booking",
-    "@bygelo/roundrobbin-commerce": "file:../roundrobbin/package/commerce",
-    "@bygelo/roundrobbin-document": "file:../roundrobbin/package/document",
-    "@bygelo/roundrobbin-form": "file:../roundrobbin/package/form",
-    "@bygelo/roundrobbin-kernel": "file:../roundrobbin/package/kernel",
-    "@bygelo/roundrobbin-membership": "file:../roundrobbin/package/membership",
-    "@bygelo/roundrobbin-notification": "file:../roundrobbin/package/notification",
-    "@bygelo/roundrobbin-scan": "file:../roundrobbin/package/scan",
+    "@bygelo/roundrobin-access": "file:../roundrobin/package/access",
+    "@bygelo/roundrobin-billing": "file:../roundrobin/package/billing",
+    "@bygelo/roundrobin-booking": "file:../roundrobin/package/booking",
+    "@bygelo/roundrobin-commerce": "file:../roundrobin/package/commerce",
+    "@bygelo/roundrobin-document": "file:../roundrobin/package/document",
+    "@bygelo/roundrobin-form": "file:../roundrobin/package/form",
+    "@bygelo/roundrobin-kernel": "file:../roundrobin/package/kernel",
+    "@bygelo/roundrobin-membership": "file:../roundrobin/package/membership",
+    "@bygelo/roundrobin-notification": "file:../roundrobin/package/notification",
+    "@bygelo/roundrobin-scan": "file:../roundrobin/package/scan",
     "@hono/node-server": "^2.1.0",
     "hono": "^4.13.1",
     "postgres": "^3.4.7"

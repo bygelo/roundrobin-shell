@@ -9,8 +9,8 @@
 
 import assert from 'node:assert/strict'
 import { after, before, describe, it } from 'node:test'
-import type { Uuid } from '@bygelo/roundrobbin-kernel'
-import { createCatalog, createVariant, setInventory } from '@bygelo/roundrobbin-commerce'
+import type { Uuid } from '@bygelo/roundrobin-kernel'
+import { createCatalog, createVariant, setInventory } from '@bygelo/roundrobin-commerce'
 import { COURT_COMPOSITION, FNB_COMPOSITION } from '../dev/composition.ts'
 import { deriveNavigation } from '../src/navigation.ts'
 import { createBookingApi } from '../src/view/booking.ts'

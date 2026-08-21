@@ -1,8 +1,8 @@
-# roundrobbin shell
+# roundrobin shell
 
-A discovery-driven operator UI for [roundrobbin OS](https://github.com/bygelo/roundrobbin). It renders what the server says is on.
+A discovery-driven operator UI for [roundrobin OS](https://github.com/bygelo/roundrobin). It renders what the server says is on.
 
-Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobbin/blob/main/docs/frontend.md) in the OS repo. Sign-in, discovery, and navigation work. **All nine pack views are drawn.** F&B and court stand up from the same build (`COMPOSITION=fnb` / `COMPOSITION=court`).
+Designed in [`docs/frontend.md`](https://github.com/bygelo/roundrobin/blob/main/docs/frontend.md) in the OS repo. Sign-in, discovery, and navigation work. **All nine pack views are drawn.** F&B and court stand up from the same build (`COMPOSITION=fnb` / `COMPOSITION=court`).
 
 **It is styled.** [`docs/design.md`](docs/design.md) reads the Microsoft account dashboard's layout and Fluent 2's published tokens, and `web/shell.css` implements it — every colour, radius, shadow and type value resolved from `@fluentui/tokens` `webLightTheme` rather than eyeballed, and checked against the computed values in a browser. Nothing in `src/` was touched to do it, which is the property that made it a styling job rather than a rewrite.
 
@@ -61,16 +61,23 @@ This repo is a **sibling**, not a port and not a pack. It talks HTTP like any ot
 
 ## Run it
 
-Requires Node 24+, PostgreSQL 16+, and a checkout of the OS beside this one — `package.json` points at `../roundrobbin/package/*` so no registry token is needed for development.
+Requires Node 24+, PostgreSQL 16+, and a checkout of the OS beside this one — `package.json` points at `../roundrobin/package/*` so no registry token is needed for development.
+
+**Kernel 0.14.0 or newer.** K83 made the store port an interface: `Store` is now the structural intersection of every driver — `{ kind, close }` — and `end()` is `PostgresStore` surface. This shell tears down through `close()`, so it will not typecheck against 0.13.x.
+
+**Two roles, not one.** The kernel refuses to serve as a PostgreSQL superuser, because superusers are exempt from row-level security and every tenant policy would silently stop applying. Migrations and the seed are the exception — they are the migration runner, and they need the elevated role. So the two commands take different URLs, and using one URL for both fails at the first page load with that refusal, not at startup.
 
 ```powershell
 npm install
-$env:DATABASE_URL = 'postgres://postgres@localhost:5432/roundrobbin_dev'
 
-# apply the OS migrations first, from the OS checkout
-cd ..\roundrobbin ; npm run db:migrate ; cd ..\roundrobbin-shell
-
+# migration + seed run as the elevated role
+$env:DATABASE_URL = 'postgres://postgres@localhost:5432/roundrobin_dev'
+cd ..\roundrobin ; npm run db:migrate ; cd ..\roundrobin-shell
 npm run dev:seed      # one tenant, every module on, one operator
+
+# the server runs as an ordinary role, so RLS actually applies
+# createuser shell_app  +  grant it the schema, once
+$env:DATABASE_URL = 'postgres://shell_app@localhost:5432/roundrobin_dev'
 npm run dev           # http://localhost:8788
 ```
 
@@ -111,7 +118,7 @@ The Billing entry disappears, and `/api/v1/invoice` starts returning 404 — the
 ## Verify
 
 ```powershell
-$env:DATABASE_URL = 'postgres://postgres@localhost:5432/roundrobbin_dev'
+$env:DATABASE_URL = 'postgres://postgres@localhost:5432/roundrobin_dev'
 npm run gate     # typecheck + build:web + check:web + preflight:db + test
 ```
 
@@ -123,7 +130,7 @@ The booking one contests a slot for real, because four layers have to behave for
 
 Current: **208 test, 208 pass** with `DATABASE_URL` set — 176 unit + 32 live. Without it the gate is **red at preflight**, not green on 176.
 
-Why the gate refuses rather than skips: a skipped suite is not merely indistinguishable from a pass, it is *uncounted* — the summary once read "172 pass, 0 skipped" while 25 live tests ran nowhere. That was [K67](https://github.com/bygelo/roundrobbin/blob/main/ROADMAP.md): `scan` went undrawn on every real tenant while this gate stayed green, because the two live tests that said so were never run. A gate that silently skips its only real-composition tests manufactures confidence, which is worse than no gate.
+Why the gate refuses rather than skips: a skipped suite is not merely indistinguishable from a pass, it is *uncounted* — the summary once read "172 pass, 0 skipped" while 25 live tests ran nowhere. That was [K67](https://github.com/bygelo/roundrobin/blob/main/ROADMAP.md): `scan` went undrawn on every real tenant while this gate stayed green, because the two live tests that said so were never run. A gate that silently skips its only real-composition tests manufactures confidence, which is worse than no gate.
 
 ## Honest state
 

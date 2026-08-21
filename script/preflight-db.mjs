@@ -61,13 +61,13 @@ try {
   if (!row || row.migration_count === 0) {
     die(
       `${where} is reachable but no migration has been applied`,
-      "apply the OS migrations first: cd ../roundrobbin && npm run db:migrate (with this DATABASE_URL)",
+      "apply the OS migrations first: cd ../roundrobin && npm run db:migrate (with this DATABASE_URL)",
     )
   }
 } catch {
   die(
     `${where} is reachable but has no schema_migration table — migrations never ran`,
-    "apply the OS migrations first: cd ../roundrobbin && npm run db:migrate (with this DATABASE_URL)",
+    "apply the OS migrations first: cd ../roundrobin && npm run db:migrate (with this DATABASE_URL)",
   )
 } finally {
   await sql.end()

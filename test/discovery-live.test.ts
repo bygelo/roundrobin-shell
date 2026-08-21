@@ -11,7 +11,7 @@
 
 import assert from 'node:assert/strict'
 import { after, before, describe, it } from 'node:test'
-import { disableModule, enableModule } from '@bygelo/roundrobbin-kernel'
+import { disableModule, enableModule } from '@bygelo/roundrobin-kernel'
 import { DECLARATION } from '../dev/app.ts'
 import { deriveNavigation } from '../src/navigation.ts'
 import { standUpTenant, type Tenant } from './harness.ts'

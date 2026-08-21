@@ -25,7 +25,7 @@ import {
   type Store,
   type TenantContext,
   type Uuid,
-} from '@bygelo/roundrobbin-kernel'
+} from '@bygelo/roundrobin-kernel'
 import { DECLARATION, createDevApp } from '../dev/app.ts'
 import type { Composition } from '../dev/composition.ts'
 import { createClient, type Session, type ShellClient } from '../src/discovery.ts'
@@ -175,7 +175,12 @@ async function standUp(
       await withOwner(store, 'create tenant', async (owner) => {
         await owner.query`DELETE FROM organization WHERE organization_id = ${organization_id}`
       })
-      await store.end()
+      // K83: teardown goes through the port, not the postgres driver. `Store`
+      // is now { kind, close } — the structural intersection of every driver —
+      // so `end()` is PostgresStore surface this harness deliberately does not
+      // hold. `close()` is the same call (sql.end({ timeout: 1 })) named as the
+      // port method, which is the whole point of the change.
+      await store.close()
     },
   }
 }

@@ -16,12 +16,12 @@ import {
   type KernelApp,
   type ModuleDeclaration,
   type Store,
-} from '@bygelo/roundrobbin-kernel'
-import { BILLING_MODULE, billingRoute } from '@bygelo/roundrobbin-billing'
-import { BOOKING_MODULE, bookingRoute } from '@bygelo/roundrobbin-booking'
-import { COMMERCE_MODULE, commerceRoute } from '@bygelo/roundrobbin-commerce'
-import { MEMBERSHIP_MODULE, membershipRoute } from '@bygelo/roundrobbin-membership'
-import { NOTIFICATION_MODULE, notificationRoute } from '@bygelo/roundrobbin-notification'
+} from '@bygelo/roundrobin-kernel'
+import { BILLING_MODULE, billingRoute } from '@bygelo/roundrobin-billing'
+import { BOOKING_MODULE, bookingRoute } from '@bygelo/roundrobin-booking'
+import { COMMERCE_MODULE, commerceRoute } from '@bygelo/roundrobin-commerce'
+import { MEMBERSHIP_MODULE, membershipRoute } from '@bygelo/roundrobin-membership'
+import { NOTIFICATION_MODULE, notificationRoute } from '@bygelo/roundrobin-notification'
 
 export type Composition = {
   composition_code: string

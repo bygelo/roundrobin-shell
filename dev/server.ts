@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { createStore } from '@bygelo/roundrobbin-kernel'
+import { createStore } from '@bygelo/roundrobin-kernel'
 import { createDevApp } from './app.ts'
 import { resolveComposition } from './composition.ts'
 
@@ -66,6 +66,6 @@ app.get('/*', async (context) => {
 
 const port = Number(process.env['PORT'] ?? 8788)
 serve({ fetch: app.fetch, port })
-console.log(`roundrobbin shell on http://localhost:${port}`)
+console.log(`roundrobin shell on http://localhost:${port}`)
 console.log(`the OS it discovers is mounted at the same origin`)
 console.log(`composition: ${composition ? composition.composition_code : 'all (nine pack harness)'}`)

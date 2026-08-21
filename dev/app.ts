@@ -1,4 +1,4 @@
-// A roundrobbin app that installs everything.
+// A roundrobin app that installs everything.
 //
 // DEV HARNESS, not a product. Its only job is to give the shell something real
 // to discover, so the phase-1 claim can be run rather than only asserted:
@@ -19,19 +19,19 @@ import {
   type KernelApp,
   type ModuleDeclaration,
   type Store,
-} from '@bygelo/roundrobbin-kernel'
-import { ACCESS_MODULE, accessRoute } from '@bygelo/roundrobbin-access'
-import { BILLING_MODULE, billingRoute } from '@bygelo/roundrobbin-billing'
-import { BOOKING_MODULE, bookingRoute } from '@bygelo/roundrobbin-booking'
-import { COMMERCE_MODULE, commerceRoute } from '@bygelo/roundrobbin-commerce'
-import { DOCUMENT_MODULE, documentRoute } from '@bygelo/roundrobbin-document'
-import { FORM_MODULE, formRoute } from '@bygelo/roundrobbin-form'
-import { MEMBERSHIP_MODULE, membershipRoute } from '@bygelo/roundrobbin-membership'
-import { NOTIFICATION_MODULE, notificationRoute } from '@bygelo/roundrobbin-notification'
+} from '@bygelo/roundrobin-kernel'
+import { ACCESS_MODULE, accessRoute } from '@bygelo/roundrobin-access'
+import { BILLING_MODULE, billingRoute } from '@bygelo/roundrobin-billing'
+import { BOOKING_MODULE, bookingRoute } from '@bygelo/roundrobin-booking'
+import { COMMERCE_MODULE, commerceRoute } from '@bygelo/roundrobin-commerce'
+import { DOCUMENT_MODULE, documentRoute } from '@bygelo/roundrobin-document'
+import { FORM_MODULE, formRoute } from '@bygelo/roundrobin-form'
+import { MEMBERSHIP_MODULE, membershipRoute } from '@bygelo/roundrobin-membership'
+import { NOTIFICATION_MODULE, notificationRoute } from '@bygelo/roundrobin-notification'
 // scan takes the store because two of its route are public — outside /api/*, so
 // neither the bearer middleware nor module gating runs, and it checks enablement
 // itself. Hence a factory here where the other pack export a contributor.
-import { SCAN_MODULE, createScanRoute } from '@bygelo/roundrobbin-scan'
+import { SCAN_MODULE, createScanRoute } from '@bygelo/roundrobin-scan'
 
 export const DECLARATION: ModuleDeclaration[] = [
   BOOKING_MODULE,

@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import type { ModuleDeclaration } from '@bygelo/roundrobbin-kernel'
+import type { ModuleDeclaration } from '@bygelo/roundrobin-kernel'
 import { COURT_COMPOSITION, FNB_COMPOSITION } from '../dev/composition.ts'
 import { deriveNavigation, isReachable, type Capability } from '../src/navigation.ts'
 

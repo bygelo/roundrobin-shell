@@ -44,7 +44,7 @@ import { describeFailure } from '/dist/view/failure.js'
 // What an app supplies. In a real deployment this is shell.config.json fetched
 // at boot; inlined here so the dev harness has no build step at all.
 const APP_CONFIG = {
-  brand: { display_name: 'roundrobbin shell' },
+  brand: { display_name: 'roundrobin shell' },
   locale: { time_zone: 'Asia/Manila' },
   navigation_order: ['booking', 'billing', 'membership', 'access'],
   label: {},
@@ -56,7 +56,7 @@ const element = createElement(document)
 const translate = createTranslator(APP_CONFIG.vocabulary)
 const root = document.getElementById('root')
 
-const STORAGE_KEY = 'roundrobbin.shell.session'
+const STORAGE_KEY = 'roundrobin.shell.session'
 
 function render(node) {
   root.replaceChildren(node)

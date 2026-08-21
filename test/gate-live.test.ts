@@ -13,14 +13,14 @@
 
 import assert from 'node:assert/strict'
 import { after, before, describe, it } from 'node:test'
-import type { Uuid } from '@bygelo/roundrobbin-kernel'
+import type { Uuid } from '@bygelo/roundrobin-kernel'
 import {
   createPlan,
   enrollCredential,
   issueMembership,
   issuePass,
-} from '@bygelo/roundrobbin-membership'
-import { createAccessPoint } from '@bygelo/roundrobbin-access'
+} from '@bygelo/roundrobin-membership'
+import { createAccessPoint } from '@bygelo/roundrobin-access'
 import { createGateApi, isPassUsable, readDeny, tallyScan } from '../src/view/gate.ts'
 import { describeFailure } from '../src/view/failure.ts'
 import { seedParty, standUpTenant, type Tenant } from './harness.ts'
