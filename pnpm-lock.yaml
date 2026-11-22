@@ -1,0 +1,238 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+overrides:
+  '@bygelo/roundrobin-access': file:../roundrobin/package/access
+  '@bygelo/roundrobin-billing': file:../roundrobin/package/billing
+  '@bygelo/roundrobin-booking': file:../roundrobin/package/booking
+  '@bygelo/roundrobin-commerce': file:../roundrobin/package/commerce
+  '@bygelo/roundrobin-document': file:../roundrobin/package/document
+  '@bygelo/roundrobin-form': file:../roundrobin/package/form
+  '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+  '@bygelo/roundrobin-membership': file:../roundrobin/package/membership
+  '@bygelo/roundrobin-notification': file:../roundrobin/package/notification
+  '@bygelo/roundrobin-scan': file:../roundrobin/package/scan
+  '@bygelo/roundrobin-access-biometric': file:/Users/you/Code/roundrobin/package/access-biometric
+  '@bygelo/roundrobin-access-nfc': file:/Users/you/Code/roundrobin/package/access-nfc
+  '@bygelo/roundrobin-access-osdp': file:/Users/you/Code/roundrobin/package/access-osdp
+  '@bygelo/roundrobin-access-relay': file:/Users/you/Code/roundrobin/package/access-relay
+  '@bygelo/roundrobin-access-wiegand': file:/Users/you/Code/roundrobin/package/access-wiegand
+  '@bygelo/roundrobin-blob': file:/Users/you/Code/roundrobin/package/blob
+  '@bygelo/roundrobin-blob-drive': file:/Users/you/Code/roundrobin/package/blob-drive
+  '@bygelo/roundrobin-blob-gcs': file:/Users/you/Code/roundrobin/package/blob-gcs
+  '@bygelo/roundrobin-blob-s3': file:/Users/you/Code/roundrobin/package/blob-s3
+  '@bygelo/roundrobin-chart': file:/Users/you/Code/roundrobin/package/chart
+  '@bygelo/roundrobin-connector': file:/Users/you/Code/roundrobin/package/connector
+  '@bygelo/roundrobin-consent': file:/Users/you/Code/roundrobin/package/consent
+  '@bygelo/create-roundrobin-app': file:/Users/you/Code/roundrobin/package/create-app
+  '@bygelo/roundrobin-design-lint': file:/Users/you/Code/roundrobin/package/design-lint
+  '@bygelo/roundrobin-event': file:/Users/you/Code/roundrobin/package/event
+  '@bygelo/roundrobin-expense': file:/Users/you/Code/roundrobin/package/expense
+  '@bygelo/roundrobin-geo': file:/Users/you/Code/roundrobin/package/geo
+  '@bygelo/roundrobin-identity-firebase': file:/Users/you/Code/roundrobin/package/identity-firebase
+  '@bygelo/roundrobin-identity-oidc': file:/Users/you/Code/roundrobin/package/identity-oidc
+  '@bygelo/roundrobin-identity-supabase': file:/Users/you/Code/roundrobin/package/identity-supabase
+  '@bygelo/roundrobin-job': file:/Users/you/Code/roundrobin/package/job
+  '@bygelo/roundrobin-job-cloud-task': file:/Users/you/Code/roundrobin/package/job-cloud-task
+  '@bygelo/roundrobin-output': file:/Users/you/Code/roundrobin/package/output
+  '@bygelo/roundrobin-realtime': file:/Users/you/Code/roundrobin/package/realtime
+  '@bygelo/roundrobin-realtime-firebase': file:/Users/you/Code/roundrobin/package/realtime-firebase
+  '@bygelo/roundrobin-realtime-supabase': file:/Users/you/Code/roundrobin/package/realtime-supabase
+  '@bygelo/roundrobin-reconcile': file:/Users/you/Code/roundrobin/package/reconcile
+  '@bygelo/roundrobin-store-dynamodb': file:/Users/you/Code/roundrobin/package/store-dynamodb
+  '@bygelo/roundrobin-store-firestore': file:/Users/you/Code/roundrobin/package/store-firestore
+  '@bygelo/roundrobin-store-mysql': file:/Users/you/Code/roundrobin/package/store-mysql
+  '@bygelo/roundrobin-task': file:/Users/you/Code/roundrobin/package/task
+  '@bygelo/roundrobin-thread': file:/Users/you/Code/roundrobin/package/thread
+  '@bygelo/roundrobin-token': file:/Users/you/Code/roundrobin/package/token
+
+importers:
+
+  .:
+    dependencies:
+      '@bygelo/roundrobin-access':
+        specifier: file:../roundrobin/package/access
+        version: file:../roundrobin/package/access
+      '@bygelo/roundrobin-billing':
+        specifier: file:../roundrobin/package/billing
+        version: file:../roundrobin/package/billing
+      '@bygelo/roundrobin-booking':
+        specifier: file:../roundrobin/package/booking
+        version: file:../roundrobin/package/booking
+      '@bygelo/roundrobin-commerce':
+        specifier: file:../roundrobin/package/commerce
+        version: file:../roundrobin/package/commerce
+      '@bygelo/roundrobin-document':
+        specifier: file:../roundrobin/package/document
+        version: file:../roundrobin/package/document
+      '@bygelo/roundrobin-form':
+        specifier: file:../roundrobin/package/form
+        version: file:../roundrobin/package/form
+      '@bygelo/roundrobin-kernel':
+        specifier: file:../roundrobin/package/kernel
+        version: file:../roundrobin/package/kernel
+      '@bygelo/roundrobin-membership':
+        specifier: file:../roundrobin/package/membership
+        version: file:../roundrobin/package/membership
+      '@bygelo/roundrobin-notification':
+        specifier: file:../roundrobin/package/notification
+        version: file:../roundrobin/package/notification
+      '@bygelo/roundrobin-scan':
+        specifier: file:../roundrobin/package/scan
+        version: file:../roundrobin/package/scan
+      '@hono/node-server':
+        specifier: ^2.1.0
+        version: 2.1.0(hono@4.13.1)
+      hono:
+        specifier: ^4.13.1
+        version: 4.13.1
+      postgres:
+        specifier: ^3.4.7
+        version: 3.4.9
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.0
+        version: 24.13.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+packages:
+
+  '@bygelo/roundrobin-access@file:../roundrobin/package/access':
+    resolution: {directory: ../roundrobin/package/access, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-billing@file:../roundrobin/package/billing':
+    resolution: {directory: ../roundrobin/package/billing, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-blob@file:../roundrobin/package/blob':
+    resolution: {directory: ../roundrobin/package/blob, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-booking@file:../roundrobin/package/booking':
+    resolution: {directory: ../roundrobin/package/booking, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-commerce@file:../roundrobin/package/commerce':
+    resolution: {directory: ../roundrobin/package/commerce, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-document@file:../roundrobin/package/document':
+    resolution: {directory: ../roundrobin/package/document, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-form@file:../roundrobin/package/form':
+    resolution: {directory: ../roundrobin/package/form, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-kernel@file:../roundrobin/package/kernel':
+    resolution: {directory: ../roundrobin/package/kernel, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-membership@file:../roundrobin/package/membership':
+    resolution: {directory: ../roundrobin/package/membership, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-notification@file:../roundrobin/package/notification':
+    resolution: {directory: ../roundrobin/package/notification, type: directory}
+    engines: {node: '>=24'}
+
+  '@bygelo/roundrobin-scan@file:../roundrobin/package/scan':
+    resolution: {directory: ../roundrobin/package/scan, type: directory}
+    engines: {node: '>=24'}
+
+  '@hono/node-server@2.1.0':
+    resolution: {integrity: sha512-XovyyCCnBzW+zKu+z/zq8hwNs4KOR5rEMAOxo2f40Q5xoOI37IMm6MIg2COOUtUApo0i6850MTBKH2u4QLGIqg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4
+
+  '@types/node@24.13.3':
+    resolution: {integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==}
+
+  hono@4.13.1:
+    resolution: {integrity: sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw==}
+    engines: {node: '>=16.9.0'}
+
+  postgres@3.4.9:
+    resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
+    engines: {node: '>=12'}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
+snapshots:
+
+  '@bygelo/roundrobin-access@file:../roundrobin/package/access':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+      '@bygelo/roundrobin-membership': file:../roundrobin/package/membership
+      '@bygelo/roundrobin-scan': file:../roundrobin/package/scan
+
+  '@bygelo/roundrobin-billing@file:../roundrobin/package/billing':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-blob@file:../roundrobin/package/blob':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-booking@file:../roundrobin/package/booking':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-commerce@file:../roundrobin/package/commerce':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-document@file:../roundrobin/package/document':
+    dependencies:
+      '@bygelo/roundrobin-blob': file:../roundrobin/package/blob
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-form@file:../roundrobin/package/form':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-kernel@file:../roundrobin/package/kernel':
+    dependencies:
+      hono: 4.13.1
+      postgres: 3.4.9
+
+  '@bygelo/roundrobin-membership@file:../roundrobin/package/membership':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-notification@file:../roundrobin/package/notification':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@bygelo/roundrobin-scan@file:../roundrobin/package/scan':
+    dependencies:
+      '@bygelo/roundrobin-kernel': file:../roundrobin/package/kernel
+
+  '@hono/node-server@2.1.0(hono@4.13.1)':
+    dependencies:
+      hono: 4.13.1
+
+  '@types/node@24.13.3':
+    dependencies:
+      undici-types: 7.18.2
+
+  hono@4.13.1: {}
+
+  postgres@3.4.9: {}
+
+  typescript@5.9.3: {}
+
+  undici-types@7.18.2: {}
